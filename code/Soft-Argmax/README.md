@@ -1,5 +1,7 @@
 # PyTorch implementation of soft-argmax 1D/2D/3D
 
+forked from <https://github.com/Fdevmsy/PyTorch-Soft-Argmax>
+
 This function assumes an input tensor in shape (batch_size, channel, height, width, depth) and returns 3D coordinates in shape (batch_size, channel, 3).
 
 For example, if your network output is (batch_size, 16, 64, 64, 64)  voxels, then the output is 3D coordinates in shape (batch_size, 16, 3). This case is usually seen when you has 16 3D heat-voxels and try to find the locations of maximum. 
