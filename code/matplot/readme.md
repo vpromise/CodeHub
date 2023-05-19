@@ -1,1 +1,1 @@
-## Matplotlib Demo Code
+# Matplotlib Demo Code
