@@ -1,30 +1,38 @@
-var url = $request.url;
+const url = $request.url;
 
-function hasUid(url) {
-  return url.includes("uid");
+function rewriteUserShow(url) {
+  const uid = url.match(/uid=(\d+)/)[1];
+  if (uid) {
+    $prefs.setValueForKey(uid, "uid");
+  }
+  $done({});
 }
 
-function getUid(url) {
-  return hasUid(url) ? url.match(/uid=(\d+)/)[1] : undefined;
+function rewriteUserTimeline(url) {
+  const uid = $prefs.valueForKey("uid");
+  let modifiedUrl = url.replace("statuses/user_timeline", "profile/statuses/tab").replace("max_id", "since_id");
+  modifiedUrl += `&containerid=230413${uid}_-_WEIBO_SECOND_PROFILE_WEIBO`;
+  $done({ url: modifiedUrl });
+}
+
+function rewriteProfileStatusesTab(body) {
+  const data = JSON.parse(body);
+  const statuses = data.cards
+    .map(card => card.card_group ? card.card_group : card)
+    .flat()
+    .filter(card => card.card_type === 9)
+    .map(card => card.mblog);
+  const sinceId = data.cardlistInfo.since_id;
+  $done({ body: JSON.stringify({ statuses, since_id: sinceId, total_number: 100 }) });
 }
 
 if (url.includes("users/show")) {
-  $prefs.setValueForKey(getUid(url), "uid");
-  $done({});
+  rewriteUserShow(url);
 } else if (url.includes("statuses/user_timeline")) {
-  var uid = getUid(url) || $prefs.valueForKey("uid");
-  url = url.replace("statuses/user_timeline", "profile/statuses/tab").replace("max_id", "since_id");
-  url = url + `&containerid=230413${uid}_-_WEIBO_SECOND_PROFILE_WEIBO`;
-  $done({ url: url });
+  rewriteUserTimeline(url);
 } else if (url.includes("profile/statuses/tab")) {
-  var data = JSON.parse($response.body);
-  var statuses = data.cards
-    .map(function(card) { return card.card_group ? card.card_group : card; })
-    .flat()
-    .filter(function(card) { return card.card_type === 9; })
-    .map(function(card) { return card.mblog; });
-  var sinceId = data.cardlistInfo.since_id;
-  $done({ body: JSON.stringify({ statuses, since_id: sinceId, total_number: 100 }) });
+  const body = $response.body;
+  rewriteProfileStatusesTab(body);
 } else {
   $done({});
 }
